@@ -1,0 +1,4 @@
+interface:
+  display_name: "简历项目高级包装一条龙"
+  short_description: "先调研 100 分架构，再压缩成高级简历钩子"
+  default_prompt: "使用 $extract-resume-stories 先调研业务与同类系统，输出 100 分能力地图和优化点到包装点映射，确认主线后再生成高密度简历故事。"
