@@ -14,13 +14,13 @@
 
 ## 2. 当前清单
 
-| Skill | 中文用途 | 分类 |
-|---|---|---|
-| [architecture-research](architecture-research/SKILL.md) | 多来源调研、知识合订和文档体系重构 | 调研 |
-| [interview-driven-course-design](interview-driven-course-design/SKILL.md) | 将知识总纲编译成面试导向的高 ROI 课程 | 学习 |
-| [extract-resume-stories](extract-resume-stories/SKILL.md) | 从业务与架构中提炼简历钩子和答辩故事 | 简历 |
-| [resume-polish](resume-polish/SKILL.md) | 逐条优化简历项目经历和配套话术 | 简历 |
-| [distill-work-summary](distill-work-summary/SKILL.md) | 提炼工作总结、成长、晋升和复盘材料 | 简历与沉淀 |
+| 中文名称 | 内部标识 | 中文用途 | 分类 |
+|---|---|---|---|
+| [知识体系调研与总纲设计](architecture-research/SKILL.md) | `architecture-research` | 多来源调研、知识合订和文档体系重构 | 调研 |
+| [面试导向课程大纲设计](interview-driven-course-design/SKILL.md) | `interview-driven-course-design` | 将知识总纲编译成面试导向的高 ROI 课程 | 学习 |
+| [extract-resume-stories](extract-resume-stories/SKILL.md) | `extract-resume-stories` | 从业务与架构中提炼简历钩子和答辩故事 | 简历 |
+| [resume-polish](resume-polish/SKILL.md) | `resume-polish` | 逐条优化简历项目经历和配套话术 | 简历 |
+| [distill-work-summary](distill-work-summary/SKILL.md) | `distill-work-summary` | 提炼工作总结、成长、晋升和复盘材料 | 简历与沉淀 |
 
 ## 3. 目录规则
 

@@ -1,4 +1,4 @@
 interface:
-  display_name: "面试导向高 ROI 课程设计"
+  display_name: "面试导向课程大纲设计"
   short_description: "将知识体系编译成结构清晰、案例驱动且可验收的面试课程"
-  default_prompt: "使用 $interview-driven-course-design 将这套知识大纲设计成面试导向、案例驱动且可验收的完整课程。"
+  default_prompt: "使用 $interview-driven-course-design（面试导向课程大纲设计）将这套知识大纲设计成案例驱动且可验收的完整课程。"

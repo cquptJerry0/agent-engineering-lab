@@ -1,4 +1,4 @@
 interface:
-  display_name: "架构研究"
+  display_name: "知识体系调研与总纲设计"
   short_description: "研究多来源事实、统一知识架构并判断技术方向的完整工作流"
-  default_prompt: "使用 $architecture-research 先设计研究范围并让我评审，再合订多来源事实形成统一、清晰且不重复的知识架构。"
+  default_prompt: "使用 $architecture-research（知识体系调研与总纲设计）先设计研究范围并让我评审，再合订多来源事实形成统一、清晰且不重复的知识架构。"
