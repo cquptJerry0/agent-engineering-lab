@@ -1,4 +1,4 @@
 interface:
   display_name: "课程授课、复习与验收"
-  short_description: "将课程大纲编译为总分总、问题驱动、实验与面试闭环的学习单元"
-  default_prompt: "使用 $course-delivery-orchestrator（课程授课、复习与验收）读取现有课程，按知识密度决定单课或合并授课，并用总分总结构完成问题推导、实验和面试闭环。"
+  short_description: "把目录条目合并成高密度课程，并分离推导理解与最终面试答案"
+  default_prompt: "使用 $course-delivery-orchestrator（课程授课、复习与验收）按知识密度编译实际课程，先产出按机制组织的推导式理解文档，再把题目拆成独立最终面试答案。"

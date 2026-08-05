@@ -45,7 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--lessons-dir",
         type=Path,
-        help="正式课件目录；不存在时所有课程视为未开始",
+        help="推导式理解文档目录；不存在时所有课程视为未开始",
     )
     parser.add_argument("--json", action="store_true", help="输出 JSON")
     return parser.parse_args()
