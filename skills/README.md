@@ -17,8 +17,8 @@
 | 中文名称 | 内部标识 | 中文用途 | 分类 |
 |---|---|---|---|
 | [知识体系调研与总纲设计](architecture-research/SKILL.md) | `architecture-research` | 多来源调研、知识合订和文档体系重构 | 调研 |
-| [面试导向课程大纲设计](interview-driven-course-design/SKILL.md) | `interview-driven-course-design` | 将知识总纲编译成面试导向的高 ROI 课程 | 学习 |
-| [课程授课、复习与验收](course-delivery-orchestrator/SKILL.md) | `course-delivery-orchestrator` | 按知识密度合并目录条目，并分离推导式理解与最终面试答案 | 学习 |
+| [自适应课程设计](interview-driven-course-design/SKILL.md) | `interview-driven-course-design` | 根据稳定知识图、动态进度和目标设计当前课程单元 | 学习 |
+| [链路课程授课与面试训练](course-delivery-orchestrator/SKILL.md) | `course-delivery-orchestrator` | 先用贯穿案例形成推导链，再独立编译面试训练 | 学习 |
 | [extract-resume-stories](extract-resume-stories/SKILL.md) | `extract-resume-stories` | 从业务与架构中提炼简历钩子和答辩故事 | 简历 |
 | [resume-polish](resume-polish/SKILL.md) | `resume-polish` | 逐条优化简历项目经历和配套话术 | 简历 |
 | [distill-work-summary](distill-work-summary/SKILL.md) | `distill-work-summary` | 提炼工作总结、成长、晋升和复盘材料 | 简历与沉淀 |

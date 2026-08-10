@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect a Markdown course catalog and lesson artifact states."""
+"""Inspect generated CU directories without assuming a fixed course catalog."""
 
 from __future__ import annotations
 
@@ -11,182 +11,103 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
-CATALOG_LESSON_RE = re.compile(
-    r"^#{2,4}\s+第\s*(\d{1,3})\s*课\s*[：:.\-]?\s*(.+?)\s*$"
-)
-ARTIFACT_HEADING_RE = re.compile(
-    r"^#{1,4}\s+第\s*(\d{1,3})"
-    r"(?:\s*[-—~至]\s*(\d{1,3}))?"
-    r"\s*课\s*[：:.\-]?\s*(.+?)\s*$"
-)
-COVERAGE_RE = re.compile(
-    r"覆盖课程\s*[：:]\s*(.+)"
-)
-NUMBER_RE = re.compile(r"第?\s*(\d{1,3})\s*课?")
+CU_DIR_RE = re.compile(r"^CU-(\d{3})(?:-(.+))?$", re.IGNORECASE)
 STATUS_RE = re.compile(
-    r"课程状态\s*[：:]\s*(进行中|待复核|已通过|未开始|已完成|已复核)"
+    r"CU\s*状态\s*[：:]\s*(未开始|推导中|面试训练中|待复核|已通过)"
 )
-COMPLETED = {"已通过", "已完成", "已复核"}
+KNOWLEDGE_ROW_RE = re.compile(r"^\|\s*\d+\s*\|\s*([^|]+?)\s*\|", re.MULTILINE)
+COMPLETED = {"已通过"}
 
 
 @dataclass
-class Lesson:
-    number: int
+class CourseUnit:
+    id: str
     title: str
     status: str
-    artifact: str | None
+    knowledge_points: int
+    learning: str
+    interview: str | None
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="读取课程目录和课件目录，输出课程状态与建议继续位置。"
+        description="扫描实际生成的 CU，输出双轨状态和建议继续位置。"
     )
-    parser.add_argument("catalog", type=Path, help="课程目录 Markdown 文件")
-    parser.add_argument(
-        "--lessons-dir",
-        type=Path,
-        help="推导式理解文档目录；不存在时所有课程视为未开始",
-    )
+    parser.add_argument("course_root", type=Path, help="包含 CU-* 目录的课程根目录")
     parser.add_argument("--json", action="store_true", help="输出 JSON")
     return parser.parse_args()
 
 
-def parse_catalog(path: Path) -> list[tuple[int, str]]:
-    lessons: list[tuple[int, str]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        match = CATALOG_LESSON_RE.match(line.strip())
-        if match:
-            lessons.append((int(match.group(1)), match.group(2).strip()))
-    return lessons
-
-
-def numbers_from_heading(match: re.Match[str]) -> list[int]:
-    start = int(match.group(1))
-    end = int(match.group(2) or start)
-    if end < start:
-        start, end = end, start
-    return list(range(start, end + 1))
-
-
-def numbers_from_coverage(text: str) -> list[int]:
-    match = COVERAGE_RE.search(text)
-    if match is None:
-        return []
-    return sorted({int(number) for number in NUMBER_RE.findall(match.group(1))})
-
-
-def numbers_from_filename(path: Path) -> list[int]:
-    match = re.search(
-        r"第?\s*(\d{1,3})(?:\s*[-—~至]\s*(\d{1,3}))?\s*课",
-        path.stem,
-    )
-    if match is None:
-        return []
-    start = int(match.group(1))
-    end = int(match.group(2) or start)
-    if end < start:
-        start, end = end, start
-    return list(range(start, end + 1))
-
-
-def read_artifacts(path: Path | None) -> dict[int, tuple[str, str]]:
-    if path is None or not path.exists():
-        return {}
-
-    artifacts: dict[int, tuple[str, str]] = {}
-    for file in sorted(path.rglob("*.md")):
-        text = file.read_text(encoding="utf-8")
-        heading = next(
-            (
-                match
-                for line in text.splitlines()
-                if (match := ARTIFACT_HEADING_RE.match(line.strip()))
-            ),
-            None,
-        )
-        numbers = numbers_from_coverage(text)
-        if not numbers and heading is not None:
-            numbers = numbers_from_heading(heading)
-        if not numbers:
-            numbers = numbers_from_filename(file)
-        if not numbers:
+def read_units(root: Path) -> list[CourseUnit]:
+    units: list[CourseUnit] = []
+    for directory in sorted(path for path in root.iterdir() if path.is_dir()):
+        match = CU_DIR_RE.match(directory.name)
+        if match is None:
             continue
 
+        learning = directory / "推导式理解.md"
+        if not learning.is_file():
+            continue
+
+        text = learning.read_text(encoding="utf-8")
         status_match = STATUS_RE.search(text)
-        status = status_match.group(1) if status_match else "进行中"
-        for number in numbers:
-            artifacts[number] = (status, str(file))
-    return artifacts
-
-
-def validate_numbers(lessons: list[tuple[int, str]]) -> list[str]:
-    errors: list[str] = []
-    numbers = [number for number, _ in lessons]
-    if not numbers:
-        return ["课程目录中没有识别到 `第 XX 课` 标题。"]
-    if len(numbers) != len(set(numbers)):
-        errors.append("课程编号存在重复。")
-    expected = list(range(min(numbers), max(numbers) + 1))
-    if numbers != expected:
-        errors.append(f"课程编号不连续或顺序错误: {numbers}")
-    return errors
+        status = status_match.group(1) if status_match else "状态缺失"
+        points = {
+            point.strip()
+            for point in KNOWLEDGE_ROW_RE.findall(text)
+        }
+        interview = directory / "面试训练.md"
+        units.append(
+            CourseUnit(
+                id=f"CU-{match.group(1)}",
+                title=(match.group(2) or "").replace("-", " "),
+                status=status,
+                knowledge_points=len(points),
+                learning=str(learning),
+                interview=str(interview) if interview.is_file() else None,
+            )
+        )
+    return units
 
 
 def main() -> int:
     args = parse_args()
-    if not args.catalog.is_file():
-        print(f"[ERROR] 课程目录不存在: {args.catalog}", file=sys.stderr)
+    root = args.course_root.expanduser().resolve()
+    if not root.is_dir():
+        print(f"[ERROR] 课程目录不存在: {root}", file=sys.stderr)
         return 2
 
-    catalog_lessons = parse_catalog(args.catalog)
-    errors = validate_numbers(catalog_lessons)
-    if errors:
-        for error in errors:
-            print(f"[ERROR] {error}", file=sys.stderr)
-        return 1
+    units = read_units(root)
+    current = next((unit for unit in units if unit.status not in COMPLETED), None)
+    if current is None:
+        next_action = "根据学习进度动态生成下一 CU"
+    elif current.status == "未开始":
+        next_action = f"开始 {current.id} 的推导式理解"
+    elif current.status == "待复核":
+        next_action = f"复核 {current.id} 并决定是否写回进度"
+    else:
+        next_action = f"继续 {current.id} 的{current.status}阶段"
 
-    artifacts = read_artifacts(args.lessons_dir)
-    lessons = [
-        Lesson(
-            number=number,
-            title=title,
-            status=artifacts.get(number, ("未开始", None))[0],
-            artifact=artifacts.get(number, ("未开始", None))[1],
-        )
-        for number, title in catalog_lessons
-    ]
-
-    next_lesson = next(
-        (lesson for lesson in lessons if lesson.status not in COMPLETED),
-        None,
-    )
     summary = {
-        "catalog": str(args.catalog),
-        "total": len(lessons),
-        "completed": sum(lesson.status in COMPLETED for lesson in lessons),
-        "in_progress": sum(lesson.status == "进行中" for lesson in lessons),
-        "pending_review": sum(lesson.status == "待复核" for lesson in lessons),
-        "next_lesson": asdict(next_lesson) if next_lesson else None,
-        "lessons": [asdict(lesson) for lesson in lessons],
+        "course_root": str(root),
+        "total": len(units),
+        "completed": sum(unit.status in COMPLETED for unit in units),
+        "current": asdict(current) if current else None,
+        "next_action": next_action,
+        "units": [asdict(unit) for unit in units],
     }
 
     if args.json:
         print(json.dumps(summary, ensure_ascii=False, indent=2))
         return 0
 
-    print(f"课程总数: {summary['total']}")
-    print(f"已通过: {summary['completed']}")
-    print(f"进行中: {summary['in_progress']}")
-    print(f"待复核: {summary['pending_review']}")
-    if next_lesson:
-        print(
-            f"建议继续: 第 {next_lesson.number:02d} 课 "
-            f"{next_lesson.title} [{next_lesson.status}]"
-        )
-        if next_lesson.artifact:
-            print(f"课件: {next_lesson.artifact}")
-    else:
-        print("建议继续: 全部课程已通过")
+    print(f"已生成 CU: {summary['total']}")
+    print(f"已通过 CU: {summary['completed']}")
+    print(f"建议下一步: {summary['next_action']}")
+    if current:
+        print(f"覆盖知识点: {current.knowledge_points}")
+        print(f"推导式理解: {current.learning}")
+        print(f"面试训练: {current.interview or '尚未生成'}")
     return 0
 
 

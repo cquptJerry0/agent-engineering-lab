@@ -11,199 +11,171 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 VALIDATE = SKILL_ROOT / "scripts" / "validate_lesson.py"
 COURSE_STATE = SKILL_ROOT / "scripts" / "course_state.py"
 
-CATALOG = """# 课程目录
+POINTS = ("模型生成", "请求结构", "工具校验")
 
-### 第 01 课：模型基础
-### 第 02 课：请求协议
-### 第 03 课：工具调用
-"""
+LEARNING = """# CU-001：模型到行动 - 推导式理解
 
-LEARNING = """# 模型与真实 API - 推导式理解
+> CU 状态：未开始
+> 生成依据：当前进度全部未开始
+> 覆盖知识点：3 个
 
-> 课程状态：待复核
-> 覆盖课程：第 01、02、03 课
+## 选课依据与覆盖知识点
+
+| 序号 | 知识点 | 总纲主归属 | 当前状态 | 本 CU 作用 |
+|---|---|---|---|---|
+| 1 | 模型生成 | 第一部分 | 未开始 | 理解候选输出 |
+| 2 | 请求结构 | 第一部分 | 未开始 | 承载输入输出 |
+| 3 | 工具校验 | 第二部分 | 未开始 | 控制真实执行 |
 
 ## 核心推导链
 
 ```text
-自然语言任务
-  ↓
-模型生成候选结果
-  ↓
-API 传输事件
-  ↓
-工具执行与验证
+文本任务 → 候选输出 → 请求结构 → 工具校验 → 真实行动
 ```
 
-## 完整流程概览
+## 贯穿案例与初始状态
 
-| 层次 | 主要问题 | 解决机制 |
-|---|---|---|
-| 模型 | 怎样生成 | Token 概率 |
-| API | 怎样传输 | 消息与事件 |
-| 工具 | 怎样执行 | 校验与回填 |
+研发 Agent 调查一次发布失败。
 
-## 一、模型怎样从上下文生成下一个 Token
+## 阶段一：模型生成只能给候选
 
-### 为什么需要？
+已有能力是生成文本，问题是没有真实状态。引入请求结构，留下怎样执行的问题。
 
-开放任务没有固定答案。
+## 阶段二：请求结构承载行动意图
 
-### ASCII 图：模型怎样逐步生成？
+请求把输入输出分开，问题是结构合法不代表允许执行。引入工具校验。
+
+## 阶段三：工具校验形成受控行动
+
+程序检查参数和权限，执行后回填结果，留下下一 CU 的循环验证问题。
+
+## 正常链路与失败链路
 
 ```text
-输入 → Token → 概率分布 → 选择 → 继续生成
+正常：请求 → 校验 → 执行 → 回填
+失败：请求 → 越权 → 拒绝 → 错误回填
 ```
 
-### 正常实验
+## 最小实验
 
-重复调用并记录输出变化。
+发送合法请求和合法但越权的请求，比较结果。
 
-### 失败实验
+## 边界、代价与下一问题
 
-强制唯一答案，观察模型补全缺失证据。
-
-### 边界、代价与下一步
-
-生成合理不等于事实正确，因此需要真实协议与工具。
-
-## 二、真实 API 与工具协议怎样形成闭环
-
-### 为什么需要？
-
-模型输出必须经过程序执行和回填。
-
-### ASCII 图：工具请求怎样变成验证结果？
-
-```text
-模型请求 → Schema → 权限 → 执行 → 回填 → 验证
-```
-
-### 正常实验
-
-打印请求、工具结果和结束原因。
-
-### 失败实验
-
-让参数格式合法但业务越权。
-
-### 边界、代价与下一步
-
-工具成功仍不等于业务成功。
-
-## 口语化输出模板
-
-### 面试题：一次模型调用的输入、输出和停止条件分别是什么？
-
-模型接收消息和参数，返回内容、工具请求和结束原因。
-
-### 面试题：为什么工具参数通过 Schema 校验后仍需业务与权限校验？
-
-Schema 只保证格式合法，不保证语义和权限合法。
+单次工具调用没有形成循环，下一问题是 Agent 怎样决定继续或停止。
 
 ## 自测问题
 
-- 为什么模型停止不等于 Agent 完成？
-- 合法 JSON 能证明什么？
+- 为什么模型输出不等于执行成功？
 
 ## 知识图谱
 
 ```text
 模型生成
-  ├─ API 事件
-  └─ 工具协议
-       └─ 业务验证
+  └─ 请求结构
+       └─ 工具校验
 ```
 
-## 面试题拆分清单
+## 面试题索引
 
-| 面试题 | 对应学习章节 | 最终答案文档 | 实验证据 |
-|---|---|---|---|
-| 一次模型调用的输入、输出和停止条件分别是什么？ | 第一、二章 | [最终答案](../面试答案/最终答案-Agent模型与API篇.md) | 请求 Trace |
-| 为什么工具参数通过 Schema 校验后仍需业务与权限校验？ | 第二章 | [最终答案](../面试答案/最终答案-Agent模型与API篇.md) | 越权失败实验 |
+### 面试题：为什么模型输出不能直接当成真实行动？
+
+对应阶段一到阶段三。
+
+### 面试题：为什么 Schema 校验后仍需要权限校验？
+
+对应阶段三。
 """
 
-INTERVIEW = """# Agent 模型与 API 篇 - 面试最终答案（2 道题）
+INTERVIEW = """# CU-001：模型到行动 - 面试训练
 
-> 对应学习文档：[模型与真实 API](../学习文档/第01-03课-模型与真实API-推导式理解.md)
+> 对应推导式理解：[推导式理解](推导式理解.md)
 
-## 1. 一次模型调用的输入、输出和停止条件分别是什么？
+## 1. 为什么模型输出不能直接当成真实行动？
 
 题型：原理型
 
-教科书定义：
+一句话核心判断：模型产生候选，程序拥有执行控制权。
 
-模型调用接收消息和参数，返回内容、工具请求和结束原因。
+启发式思考：
 
-启发式思维：
-
-| 问题 | 回答 |
+| 思考 | 回答 |
 |---|---|
-| 没有它会怎样 | 客户端无法区分输入、输出和结束状态 |
-| 怎么解决 | 定义消息、响应和结束原因 |
-| 好处 | 可以统一编排模型和工具 |
-| 坏处或边界 | 模型结束不等于任务完成 |
+| 没有它会怎样 | 模型描述会被误当成结果 |
+| 最小机制是什么 | 分离意图、执行和回填 |
+| 工程收益 | 可以验证和审计 |
+| 边界和代价 | 执行器需要维护 |
 
-口语化输出：
+30 秒回答：
 
-> 一次模型调用先接收消息和运行参数，再生成文本或工具请求，并用结束原因说明本轮为什么停止。
+> 模型只生成候选内容或行动意图，程序还要校验参数、权限和真实结果。
+
+完整回答：
+
+模型没有直接控制外部系统，工具执行器才拥有副作用控制权。
 
 ASCII 图或关键表：
 
 ```text
-消息 → 模型 → 内容或工具请求 → 结束原因
+模型意图 → 程序校验 → 工具执行 → 结果回填
 ```
 
-追问点：
+追问：
 
-Q: 为什么有文本不等于成功？
+- 原理追问：自回归生成意味着什么？
+- 工程追问：怎样防止重复副作用？
+- 项目追问：你如何保存调用证据？
 
-实验或 Trace 证据：
+证据：
 
-打印完整请求、响应和结束原因。
+合法请求与越权请求的对照 Trace。
 
-对应学习章节：
+对应推导章节：
 
-第一、二章。
+阶段一到阶段三。
 
-## 2. 为什么工具参数通过 Schema 校验后仍需业务与权限校验？
+## 2. 为什么 Schema 校验后仍需要权限校验？
 
 题型：工程型
 
-教科书定义：
+一句话核心判断：结构合法不代表业务允许。
 
-Schema 只检查字段结构，业务和权限需要确定性程序判断。
+启发式思考：
 
-启发式思维：
-
-| 问题 | 回答 |
+| 思考 | 回答 |
 |---|---|
-| 没有它会怎样 | 合法格式可能执行越权操作 |
-| 怎么解决 | 分离格式、业务和权限校验 |
-| 好处 | 阻止错误和越权副作用 |
-| 坏处或边界 | 校验规则也需要维护 |
+| 没有它会怎样 | 合法参数可能越权 |
+| 最小机制是什么 | 分离结构、业务和权限校验 |
+| 工程收益 | 限制错误副作用 |
+| 边界和代价 | 权限规则需要维护 |
 
-口语化输出：
+30 秒回答：
 
-> Schema 只能证明参数长得对，业务校验判断参数有没有意义，权限校验判断当前用户能不能执行。
+> Schema 只保证字段形状，业务规则和用户权限必须由确定性程序单独判断。
+
+完整回答：
+
+工具参数来自不可信模型输出，执行前需要逐层校验。
 
 ASCII 图或关键表：
 
 ```text
-Schema → 业务语义 → 权限 → 执行 → 回读
+Schema → 业务语义 → 权限 → 执行
 ```
 
-追问点：
+追问：
 
-Q: 模型能否决定用户权限？
+- 原理追问：Schema 能证明什么？
+- 工程追问：审批放在哪一层？
+- 项目追问：如何验证越权被拒绝？
 
-实验或 Trace 证据：
+证据：
 
-使用合法但越权的回滚参数执行失败实验。
+合法但越权参数的失败实验。
 
-对应学习章节：
+对应推导章节：
 
-第二章。
+阶段三。
 """
 
 
@@ -211,16 +183,18 @@ class DeliveryScriptsTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
-        self.catalog = self.root / "catalog.md"
-        self.learning_dir = self.root / "学习文档"
-        self.interview_dir = self.root / "面试答案"
-        self.learning = self.learning_dir / "第01-03课-模型与真实API-推导式理解.md"
-        self.interview = self.interview_dir / "最终答案-Agent模型与API篇.md"
-        self.learning_dir.mkdir()
-        self.interview_dir.mkdir()
-        self.catalog.write_text(CATALOG, encoding="utf-8")
+        self.course_root = self.root / "课程"
+        self.cu = self.course_root / "CU-001-模型到行动"
+        self.cu.mkdir(parents=True)
+        self.learning = self.cu / "推导式理解.md"
+        self.interview = self.cu / "面试训练.md"
+        self.outline = self.root / "学习总纲.md"
+        self.progress = self.root / "学习进度.md"
         self.learning.write_text(LEARNING, encoding="utf-8")
         self.interview.write_text(INTERVIEW, encoding="utf-8")
+        source = "\n".join(POINTS)
+        self.outline.write_text(source, encoding="utf-8")
+        self.progress.write_text(source, encoding="utf-8")
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
@@ -233,8 +207,10 @@ class DeliveryScriptsTest(unittest.TestCase):
                 str(self.learning),
                 "--interview",
                 str(self.interview),
-                "--catalog",
-                str(self.catalog),
+                "--outline",
+                str(self.outline),
+                "--progress",
+                str(self.progress),
                 "--strict",
             ],
             check=False,
@@ -242,7 +218,7 @@ class DeliveryScriptsTest(unittest.TestCase):
             capture_output=True,
         )
 
-    def test_dual_track_documents_validate_and_map_all_courses(self) -> None:
+    def test_dual_track_cu_validates_and_state_scans_directory(self) -> None:
         validate = self.run_validate()
         self.assertEqual(validate.returncode, 0, validate.stdout + validate.stderr)
 
@@ -250,9 +226,7 @@ class DeliveryScriptsTest(unittest.TestCase):
             [
                 "python3",
                 str(COURSE_STATE),
-                str(self.catalog),
-                "--lessons-dir",
-                str(self.learning_dir),
+                str(self.course_root),
                 "--json",
             ],
             check=False,
@@ -261,32 +235,35 @@ class DeliveryScriptsTest(unittest.TestCase):
         )
         self.assertEqual(state.returncode, 0, state.stdout + state.stderr)
         result = json.loads(state.stdout)
-        self.assertEqual(result["pending_review"], 3)
-        self.assertEqual(
-            {lesson["artifact"] for lesson in result["lessons"]},
-            {str(self.learning)},
-        )
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(result["current"]["id"], "CU-001")
+        self.assertEqual(result["current"]["knowledge_points"], 3)
+        self.assertEqual(result["current"]["status"], "未开始")
 
-    def test_full_interview_answer_sections_are_rejected_in_learning_doc(self) -> None:
+    def test_full_interview_sections_are_rejected_in_learning_track(self) -> None:
         invalid = LEARNING.replace(
             "## 自测问题",
-            "## 30 秒回答\n\n不应出现在学习正文。\n\n## 自测问题",
+            "## 30 秒回答\n\n不应出现在第一轨。\n\n## 自测问题",
         )
         self.learning.write_text(invalid, encoding="utf-8")
-
         validate = self.run_validate()
         self.assertEqual(validate.returncode, 1)
-        self.assertIn("不应包含完整面试答案章节", validate.stdout)
+        self.assertIn("不应包含完整面试训练章节", validate.stdout)
 
-    def test_missing_split_question_is_rejected(self) -> None:
+    def test_missing_interview_question_is_rejected(self) -> None:
         truncated = INTERVIEW.split(
-            "## 2. 为什么工具参数通过 Schema 校验后仍需业务与权限校验？"
+            "## 2. 为什么 Schema 校验后仍需要权限校验？"
         )[0]
         self.interview.write_text(truncated, encoding="utf-8")
-
         validate = self.run_validate()
         self.assertEqual(validate.returncode, 1)
-        self.assertIn("尚未拆出学习文档中的题目", validate.stdout)
+        self.assertIn("尚未覆盖第一轨索引中的题目", validate.stdout)
+
+    def test_unknown_knowledge_point_is_rejected(self) -> None:
+        self.progress.write_text("模型生成\n请求结构\n", encoding="utf-8")
+        validate = self.run_validate()
+        self.assertEqual(validate.returncode, 1)
+        self.assertIn("学习进度中未找到覆盖知识点: 工具校验", validate.stdout)
 
 
 if __name__ == "__main__":
