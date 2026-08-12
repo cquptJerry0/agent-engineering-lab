@@ -1,4 +1,4 @@
 interface:
   display_name: "链路课程与面试训练"
-  short_description: "根据进度动态选择 CU，先用贯穿案例推导原理，再独立训练面试题"
-  default_prompt: "使用 $course-delivery-orchestrator 读取知识总纲和学习进度，动态选择当前 CU，先沿一个贯穿项目完成推导式理解，再生成独立面试训练并定义真实验收。"
+  short_description: "按知识点群交付机制全解、实验、自测和独立面试训练"
+  default_prompt: "使用 $course-delivery-orchestrator 读取知识总纲和学习进度；用名词化技术主题命名 CU 与阶段，再列知识点群，沿贯穿项目完成推导、机制全解、实验、自测和独立面试训练。"

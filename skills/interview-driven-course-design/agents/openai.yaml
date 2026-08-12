@@ -1,4 +1,4 @@
 interface:
   display_name: "自适应双轨课程设计"
-  short_description: "根据知识总纲、学习进度和当前目标动态设计链路学习与面试训练"
-  default_prompt: "使用 $interview-driven-course-design 根据我的知识总纲和学习进度选择当前最值得学习的 CU，先设计贯穿项目的推导链，再规划独立面试训练。"
+  short_description: "动态设计知识点群、机制全解、实验任务卡与独立面试训练"
+  default_prompt: "使用 $interview-driven-course-design 根据知识总纲和学习进度选择当前 CU；用名词化技术主题命名 CU 与阶段，再设计知识点群、项目推导、机制全解、实验、自测和独立面试训练。"

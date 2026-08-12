@@ -37,17 +37,95 @@ LEARNING = """# CU-001：模型到行动 - 推导式理解
 
 研发 Agent 调查一次发布失败。
 
-## 阶段一：模型生成只能给候选
+## 阶段一：模型生成原理
 
-已有能力是生成文本，问题是没有真实状态。引入请求结构，留下怎样执行的问题。
+### 本阶段知识点群
 
-## 阶段二：请求结构承载行动意图
+模型生成。
 
-请求把输入输出分开，问题是结构合法不代表允许执行。引入工具校验。
+### 当前问题
 
-## 阶段三：工具校验形成受控行动
+模型没有真实状态。
 
-程序检查参数和权限，执行后回填结果，留下下一 CU 的循环验证问题。
+### 推导过程
+
+已有能力是生成文本，引入请求结构。
+
+### 机制全解
+
+模型生成的是候选，不是执行结果。
+
+### 状态变化
+
+从自由文本变为可识别请求。
+
+### 阶段结论
+
+请求结构承载行动意图。
+
+### 下一问题
+
+怎样执行？
+
+## 阶段二：请求结构与行动意图
+
+### 本阶段知识点群
+
+请求结构。
+
+### 当前问题
+
+结构合法不代表允许执行。
+
+### 推导过程
+
+请求把输入输出分开，引入工具校验。
+
+### 机制全解
+
+请求结构只表达数据形状。
+
+### 状态变化
+
+从请求候选变为待校验行动。
+
+### 阶段结论
+
+执行前需要确定性校验。
+
+### 下一问题
+
+怎样控制副作用？
+
+## 阶段三：工具校验与执行控制
+
+### 本阶段知识点群
+
+工具校验。
+
+### 当前问题
+
+模型参数不可信。
+
+### 推导过程
+
+程序检查参数和权限，执行后回填结果。
+
+### 机制全解
+
+结构、业务和权限校验拥有不同职责。
+
+### 状态变化
+
+从行动意图变为真实结果。
+
+### 阶段结论
+
+最小受控行动已经形成。
+
+### 下一问题
+
+怎样继续或停止？
 
 ## 正常链路与失败链路
 
@@ -56,25 +134,53 @@ LEARNING = """# CU-001：模型到行动 - 推导式理解
 失败：请求 → 越权 → 拒绝 → 错误回填
 ```
 
-## 最小实验
+## 实验任务卡
 
-发送合法请求和合法但越权的请求，比较结果。
+### 实验任务一：合法请求
+
+实验目标：验证正常执行。
+覆盖知识点：请求结构。
+准备条件：一个模拟工具。
+操作步骤：发送合法请求。
+预期现象：工具返回结果。
+通过标准：结果被回填。
+产出证据：调用日志。
+
+### 实验任务二：越权请求
+
+实验目标：验证权限拒绝。
+覆盖知识点：工具校验。
+准备条件：只读身份。
+操作步骤：发送写请求。
+预期现象：工具未执行。
+通过标准：返回权限错误。
+产出证据：拒绝日志。
 
 ## 边界、代价与下一问题
 
 单次工具调用没有形成循环，下一问题是 Agent 怎样决定继续或停止。
 
-## 自测问题
+## 自测题与答案
 
-- 为什么模型输出不等于执行成功？
+### 题目一
 
-## 知识图谱
+为什么模型输出不等于执行成功？
+
+参考答案：模型只产生候选，程序才执行工具。
+
+判分点：区分生成和执行。
+
+## 知识关系图
 
 ```text
 模型生成
-  └─ 请求结构
-       └─ 工具校验
+  └─ 产生候选 → 请求结构
+                    └─ 交给程序校验 → 工具执行
 ```
+
+### 如何读图
+
+从模型生成开始，沿关系箭头读取。
 
 ## 面试题索引
 
@@ -242,8 +348,8 @@ class DeliveryScriptsTest(unittest.TestCase):
 
     def test_full_interview_sections_are_rejected_in_learning_track(self) -> None:
         invalid = LEARNING.replace(
-            "## 自测问题",
-            "## 30 秒回答\n\n不应出现在第一轨。\n\n## 自测问题",
+            "## 自测题与答案",
+            "## 30 秒回答\n\n不应出现在第一轨。\n\n## 自测题与答案",
         )
         self.learning.write_text(invalid, encoding="utf-8")
         validate = self.run_validate()
@@ -264,6 +370,33 @@ class DeliveryScriptsTest(unittest.TestCase):
         validate = self.run_validate()
         self.assertEqual(validate.returncode, 1)
         self.assertIn("学习进度中未找到覆盖知识点: 工具校验", validate.stdout)
+
+    def test_stage_without_mechanism_explanation_is_rejected(self) -> None:
+        invalid = LEARNING.replace("### 机制全解", "### 机制说明", 1)
+        self.learning.write_text(invalid, encoding="utf-8")
+        validate = self.run_validate()
+        self.assertEqual(validate.returncode, 1)
+        self.assertIn("阶段 1 缺少结构字段", validate.stdout)
+
+    def test_question_style_learning_title_is_rejected(self) -> None:
+        invalid = LEARNING.replace(
+            "# CU-001：模型到行动 - 推导式理解",
+            "# CU-001：模型如何走到真实行动 - 推导式理解",
+        )
+        self.learning.write_text(invalid, encoding="utf-8")
+        validate = self.run_validate()
+        self.assertEqual(validate.returncode, 1)
+        self.assertIn("CU 标题必须是技术主题", validate.stdout)
+
+    def test_question_style_stage_title_is_rejected(self) -> None:
+        invalid = LEARNING.replace(
+            "## 阶段一：模型生成原理",
+            "## 阶段一：模型为什么只能生成候选答案",
+        )
+        self.learning.write_text(invalid, encoding="utf-8")
+        validate = self.run_validate()
+        self.assertEqual(validate.returncode, 1)
+        self.assertIn("理解轨阶段标题必须是技术主题", validate.stdout)
 
 
 if __name__ == "__main__":

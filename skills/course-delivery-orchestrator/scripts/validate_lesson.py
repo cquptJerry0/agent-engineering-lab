@@ -29,6 +29,18 @@ STAGE_RE = re.compile(
     r"^##\s+(?:阶段|版本)\s*(?:[一二三四五六七八九十]+|\d+)",
     re.MULTILINE,
 )
+LEARNING_TITLE_RE = re.compile(
+    r"^#\s+(?P<title>.*推导式理解.*)$",
+    re.MULTILINE,
+)
+STAGE_TITLE_RE = re.compile(
+    r"^##\s+(?:阶段|版本)\s*(?:[一二三四五六七八九十]+|\d+)\s*[：:]\s*(?P<title>.+)$",
+    re.MULTILINE,
+)
+QUESTION_STYLE_TITLE_RE = re.compile(
+    r"[？?]|为什么|为何|怎样|如何|怎么|什么是|是否|能否|能不能|可不可以"
+)
+EXPERIMENT_RE = re.compile(r"^###\s+实验(?:任务)?[一二三四五六七八九十\d：:]", re.MULTILINE)
 KNOWLEDGE_ROW_RE = re.compile(
     r"^\|\s*\d+\s*\|\s*([^|]+?)\s*\|",
     re.MULTILINE,
@@ -40,12 +52,29 @@ LEARNING_REQUIRED_SECTIONS = {
     "贯穿案例与初始状态": (r"贯穿案例", r"初始状态"),
     "正常链路": (r"正常链路",),
     "失败链路": (r"失败链路",),
-    "最小实验": (r"最小实验",),
+    "实验任务卡": (r"实验任务卡",),
     "边界、代价与下一问题": (r"边界", r"下一问题"),
-    "自测问题": (r"自测问题",),
-    "知识图谱": (r"知识图谱",),
+    "自测题与答案": (r"自测", r"答案"),
+    "知识关系图": (r"知识", r"图"),
     "面试题索引": (r"面试题索引",),
 }
+STAGE_REQUIRED_MARKERS = (
+    "本阶段知识点群",
+    "推导过程",
+    "机制全解",
+    "状态变化",
+    "阶段结论",
+    "下一问题",
+)
+EXPERIMENT_REQUIRED_MARKERS = (
+    "实验目标",
+    "覆盖知识点",
+    "准备条件",
+    "操作步骤",
+    "预期现象",
+    "通过标准",
+    "产出证据",
+)
 FORBIDDEN_LEARNING_SECTIONS = {
     "30 秒回答": r"30\s*秒回答",
     "完整回答": r"完整回答",
@@ -151,6 +180,28 @@ def interview_question_sections(text: str) -> list[tuple[str, str]]:
     return sections
 
 
+def heading_sections(text: str, pattern: re.Pattern[str]) -> list[str]:
+    matches = list(pattern.finditer(text))
+    sections: list[str] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections.append(text[match.start():end])
+    return sections
+
+
+def validate_learning_titles(text: str) -> list[str]:
+    errors: list[str] = []
+    learning_title = LEARNING_TITLE_RE.search(text)
+    if learning_title and QUESTION_STYLE_TITLE_RE.search(learning_title.group("title")):
+        errors.append("推导式理解的 CU 标题必须是技术主题，不能使用问题句。")
+
+    for match in STAGE_TITLE_RE.finditer(text):
+        title = match.group("title").strip()
+        if QUESTION_STYLE_TITLE_RE.search(title):
+            errors.append(f"理解轨阶段标题必须是技术主题，不能使用问题句: {title}")
+    return errors
+
+
 def validate_knowledge_sources(
     points: list[str],
     source: Path | None,
@@ -179,6 +230,7 @@ def validate_learning(
 
     if LEARNING_HEADING_RE.search(text) is None:
         errors.append("一级标题必须明确标注“推导式理解”。")
+    errors.extend(validate_learning_titles(text))
 
     cu_match = CU_ID_RE.search(text)
     cu_id = cu_match.group(0).upper() if cu_match else None
@@ -192,9 +244,28 @@ def validate_learning(
         if not has_section_heading(text, patterns):
             errors.append(f"推导式理解文档缺少章节: {section}")
 
-    stage_count = len(STAGE_RE.findall(text))
+    stages = heading_sections(text, STAGE_RE)
+    stage_count = len(stages)
     if stage_count < 3:
         errors.append(f"至少需要 3 个连续演进阶段，当前识别到 {stage_count} 个。")
+    for index, stage in enumerate(stages, start=1):
+        missing_markers = [
+            marker for marker in STAGE_REQUIRED_MARKERS if marker not in stage
+        ]
+        if missing_markers:
+            errors.append(f"阶段 {index} 缺少结构字段: {missing_markers}")
+
+    experiments = heading_sections(text, EXPERIMENT_RE)
+    if len(experiments) < 2:
+        errors.append(f"至少需要 2 张实验任务卡，当前识别到 {len(experiments)} 张。")
+    for index, experiment in enumerate(experiments, start=1):
+        missing_markers = [
+            marker
+            for marker in EXPERIMENT_REQUIRED_MARKERS
+            if marker not in experiment
+        ]
+        if missing_markers:
+            errors.append(f"实验任务卡 {index} 缺少字段: {missing_markers}")
 
     code_blocks = re.findall(
         r"```(?:text)?\s*\n(.*?)```",
@@ -221,6 +292,14 @@ def validate_learning(
     questions = [question.strip() for question in QUESTION_RE.findall(index_section)]
     if not questions:
         errors.append("面试题索引必须展示至少一道完整题目。")
+
+    self_test_section = section_text(text, r"自测")
+    if "参考答案" not in self_test_section or "判分点" not in self_test_section:
+        errors.append("自测题必须包含参考答案和判分点。")
+
+    graph_section = section_text(text, r"知识关系图|知识图谱")
+    if "如何读图" not in graph_section:
+        errors.append("知识关系图缺少“如何读图”。")
 
     for name, pattern in FORBIDDEN_LEARNING_SECTIONS.items():
         if has_section_heading(text, (pattern,)):
