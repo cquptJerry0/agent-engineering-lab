@@ -24,6 +24,7 @@
 | [资料索引](docs/资料索引.md) | 保存稳定证据、待验证方向和更新规则 |
 | [架构决策](docs/adr/0001-learning-architecture.md) | 解释为什么采用动态课程与双轨产物 |
 | [个人 Skills](skills/README.md) | 保存可复用的调研、课程和职业表达工作流 |
+| [跨领域前向测试](evals/architecture-course-generalization/2026-08-12/README.md) | 验证两个 Skill 能否产出 408、存储体系完整架构与随机双轨 CU |
 
 ## 学习运行时
 
