@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a dynamic, dual-track course design."""
+"""Validate a dynamic, dual-track CU design."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ REQUIRED_CONCEPTS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="校验动态选课、链路学习、双轨产物和状态写回合同。"
+        description="校验通用技术主题的动态选课、双轨 CU 和状态写回合同。"
     )
     parser.add_argument("course_file", type=Path, help="课程入口或设计 Markdown 文件")
     parser.add_argument(

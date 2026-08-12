@@ -1,4 +1,4 @@
 interface:
-  display_name: "链路课程与面试训练"
-  short_description: "按知识点群交付机制全解、实验、自测和独立面试训练"
-  default_prompt: "使用 $course-delivery-orchestrator 读取知识总纲和学习进度；用名词化技术主题命名 CU 与阶段，再列知识点群，沿贯穿项目完成推导、机制全解、实验、自测和独立面试训练。"
+  display_name: "通用技术双轨 CU"
+  short_description: "从知识总纲动态设计并交付任意技术主题的理解与面试双轨 CU"
+  default_prompt: "使用 $course-delivery-orchestrator 从知识总纲和学习进度动态选择当前技术 CU，按合适的贯穿载体完成推导、机制全解、实验、自测和独立面试训练。"
